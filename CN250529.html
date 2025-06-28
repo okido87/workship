@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chương Trình Thờ Phượng - HTTL Gò Mây (Điều Khiển Chuyên Nghiệp)</title>
+    <title>Chương Trình Thờ Phượng - HTTL Gò Mây (Bản Hoàn Thiện)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- ================================================================= -->
-    <!-- PHẦN CSS - ĐIỀU CHỈNH LẠI TOÀN BỘ ĐIỀU HƯỚNG                      -->
+    <!-- PHẦN CSS - CHỈ THAY ĐỔI HÌNH NỀN CỦA #bg-intro                     -->
     <!-- ================================================================= -->
     <style>
         :root {
@@ -58,7 +59,7 @@
             background-position: center center;
             opacity: 0; visibility: hidden;
             transition: opacity 0.8s ease-in-out;
-            transform: scale(1); /* Thêm để CSS biết đây là 1 slide gốc */
+            transform: scale(1);
         }
 
         .slide.active { opacity: 1; visibility: visible; }
@@ -100,9 +101,7 @@
         .scripture-ref { font-size: var(--font-size-performer); color: var(--text-highlight); margin-top: 2%; text-align: right; font-style: italic; font-weight: 400; }
         
         /* === BỘ HÌNH NỀN BIỂU TƯỢNG === */
-        .bg-intro { 
-    background-image: url('https://images.pexels.com/photos/167964/pexels-photo-167964.jpeg'); 
-}
+        #bg-intro { background-image: url('https://images.pexels.com/photos/1797161/pexels-photo-1797161.jpeg'); } /* HÌNH NỀN MỚI CHO SLIDE ĐẦU */
         .bg-praise { background-image: url('https://images.pexels.com/photos/1252869/pexels-photo-1252869.jpeg'); }
         .bg-creed { background-image: url('https://images.pexels.com/photos/775219/pexels-photo-775219.jpeg'); }
         .bg-prayer { background-image: url('https://images.pexels.com/photos/1477197/pexels-photo-1477197.jpeg'); }
@@ -114,81 +113,58 @@
         .bg-announcement { background-image: url('https://images.pexels.com/photos/450059/pexels-photo-450059.jpeg'); }
         .bg-benediction { background-image: url('https://images.pexels.com/photos/1112048/pexels-photo-1112048.jpeg'); }
         .bg-closing { background-image: url('https://images.pexels.com/photos/414144/pexels-photo-414144.jpeg'); }
-
-        /* === CSS MỚI CHO CÁC NÚT ĐIỀU HƯỚNG VÀ OVERLAY === */
+        #bg-closing-hymn { background-image: url('https://images.pexels.com/photos/1133957/pexels-photo-1133957.jpeg'); }
 
         #nav-controls {
             position: absolute; bottom: 15px; right: 15px;
             z-index: 50; display: flex; flex-direction: row; gap: 5px;
         }
-
         #nav-controls button {
-            background-color: rgba(0, 0, 0, 0.3);
-            color: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px; width: 45px; height: 35px;
+            background-color: rgba(0, 0, 0, 0.3); color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; 
+            width: 45px; height: 35px;
             font-family: 'Montserrat', sans-serif; font-size: 20px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: all 0.3s;
         }
-
         #nav-controls button:hover {
             background-color: rgba(255, 215, 0, 0.8); color: black;
             border-color: rgba(255, 215, 0, 1);
         }
+        #nav-controls button:disabled { cursor: not-allowed; opacity: 0.5; }
         
         #thumbnail-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.97); z-index: 100;
             display: none; justify-content: center; align-items: center; padding: 50px;
         }
-
         #close-thumbnails {
             position: absolute; top: 15px; right: 25px;
             font-size: 40px; color: white; cursor: pointer; z-index: 101;
         }
         #close-thumbnails:hover { color: var(--text-highlight); }
-
         #thumbnail-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px; width: 100%; height: 100%;
             overflow-y: auto; padding: 15px;
         }
-        
-        /* Thumbnail item để chứa bản sao thu nhỏ */
         .thumbnail-item {
             aspect-ratio: 16 / 9;
             border: 2px solid #555; border-radius: 5px;
-            cursor: pointer; position: relative;
-            overflow: hidden; /* QUAN TRỌNG: để giấu phần thừa của slide được scale */
+            cursor: pointer; position: relative; overflow: hidden;
             transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
         }
         .thumbnail-item:hover {
-            transform: scale(1.2); /* Phóng to thumbnail khi hover */
-            border-color: var(--text-highlight);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            z-index: 110; /* Đưa thumbnail lên trên các thumbnail khác */
+            transform: scale(1.2); border-color: var(--text-highlight);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); z-index: 110;
         }
-        
-        /* Wrapper để scale bản sao của slide */
-        .thumbnail-wrapper {
-            position: absolute; top: 0; left: 0;
-            transform-origin: 0 0; /* Đặt gốc transform ở góc trên bên trái */
-        }
-        
-        /* Lớp phủ chứa số thứ tự slide trên thumbnail */
+        .thumbnail-wrapper { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
         .thumbnail-overlay-info {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 3; /* Luôn nổi trên slide được clone */
+            position: absolute; top: 5px; left: 5px;
+            background-color: rgba(0,0,0,0.7); color: white;
+            padding: 2px 6px; border-radius: 3px;
+            font-size: 14px; font-weight: bold; z-index: 3;
         }
 
     </style>
@@ -197,75 +173,74 @@
     <div id="presentation-container">
 
         <!-- ================================================================= -->
-        <!-- PHẦN HTML - NỘI DUNG SLIDE GIỮ NGUYÊN 100%                       -->
+        <!-- PHẦN HTML - GIỮ NGUYÊN 100%                                      -->
         <!-- ================================================================= -->
-        <div class="slide active bg-intro"><div class="content-wrapper"><h1 class="main-title" style="font-size: 4.5vw;">HỘI THÁNH TIN LÀNH GÒ MÂY</h1><p class="sub-title" style="font-size: 3.5vw;">CHƯƠNG TRÌNH THỜ PHƯỢNG CHÚA</p><p class="performer" style="font-size: 2.2vw;">Chúa nhật, 29/06/2025</p><h1 class="main-title" style="font-size: 4.5vw;">NGỢI KHEN - CẢM TẠ <br>& LÀM CHỨNG</h1><p class="performer" style="font-size: 2.5vw;">HDCT: CS. Ngô Nhơn<br>Chủ lễ: MSQN. Nguyễn Thái Dương</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">TC 26 - Chúc Cho Đấng Ngồi Trên Ngôi</p><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><p class="hymn-lyrics">Chúc cho Đấng ngồi trên ngôi,<br>cùng Chiên Con, được ngợi khen,<br>tôn quý, vinh hiển và quyền phép,<br>cho đến đời đời, cho đến đời đời.<br>A-men, A-men, A- men.</p></div></div>
-        <div class="slide bg-creed"><div class="content-wrapper"><h1 class="main-title">TUYÊN XƯNG ĐỨC TIN</h1><p class="sub-title">Tín Điều Các Sứ Đồ</p><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-prayer"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN KHAI LỄ</h1><p class="performer">Bà MS. Quản nhiệm</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">Thánh Ca 325 - Gánh Lúa Về</p><p class="performer">Ban Hát Dẫn & Hội Thánh</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">Thánh Ca 617 - Xin Cha Ban Cho Thêm Dầu</p><p class="performer">Ban Hát Dẫn & Hội Thánh</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><h1 class="main-title">ĐỌC KINH THÁNH ĐỐI ĐÁP</h1><p class="sub-title">Số 19 - CỦA BÁU THẬT</p><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Các ngươi chớ chứa của cải ở dưới đất, là nơi có sâu mối, ten rét làm hư, và kẻ trộm đào ngạch khoét vách mà lấy;</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Nhưng phải chứa của cải ở trên trời, là nơi chẳng có sâu mối, ten rét làm hư, cũng chẳng có kẻ trộm đào ngạch khoét vách mà lấy.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vì chưng của cải ngươi ở đâu, thì lòng ngươi cũng ở đó.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Chẳng ai được làm tôi hai chủ; vì sẽ ghét người nầy mà yêu người kia, hoặc trọng người nầy mà khinh người kia. Các ngươi không có thể làm tôi Đức Chúa Trời lại làm tôi Ma-môn nữa.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vậy nên ta phán cùng các ngươi rằng: Đừng vì sự sống mình mà lo đồ ăn uống; cũng đừng vì thân thể mình mà lo đồ mặc.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Sự sống há chẳng quí trọng hơn đồ ăn sao, thân thể há chẳng quí trọng hơn quần áo sao?</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Hãy xem loài chim trời: Chẳng có gieo, gặt, cũng chẳng có thâu trữ vào kho tàng, mà Cha các ngươi trên trời nuôi nó.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Các ngươi há chẳng phải là quí trọng hơn loài chim sao?</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vả lại, có ai trong vòng các ngươi lo lắng mà làm cho đời mình được dài thêm một khắc không?</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Còn về phần quần áo, các ngươi lại lo lắng mà làm chi? Hãy ngắm xem những hoa huệ ngoài đồng mọc lên thể nào; chẳng làm khó nhọc, cũng không kéo chỉ;</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Nhưng ta phán cùng các ngươi, dẫu vua Sa-lô-môn sang trọng đến đâu, cũng không được mặc áo tốt như một hoa nào trong giống đó.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Hỡi kẻ ít đức tin, loài cỏ ngoài đồng, là giống nay còn sống, mai bỏ vào lò, mà Đức Chúa Trời còn cho nó mặc đẹp thể ấy thay, huống chi là các ngươi!</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Ấy vậy, các ngươi chớ lo lắng mà nói rằng: Chúng ta sẽ ăn gì? Uống gì? Mặc gì?</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Vì mọi điều đó, các dân ngoại vẫn thường tìm, và Cha các ngươi ở trên trời vốn biết các ngươi cần dùng những điều đó rồi.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Nhưng trước hết, hãy tìm kiếm nước Đức Chúa Trời và sự công bình của Ngài, thì Ngài sẽ cho thêm các ngươi mọi điều ấy nữa.</span></p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Vậy, chớ lo lắng chi về ngày mai; vì ngày mai sẽ lo về việc ngày mai. Sự khó nhọc ngày nào đủ cho ngày ấy.</span></p></div></div>
-        <div class="slide bg-offering"><div class="content-wrapper"><h1 class="main-title">DÂNG HIẾN</h1><p class="sub-title">Thánh Ca 839 - Đến Với Chúa Tay Trắng Thôi Sao?</p><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-prayer"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN DÂNG HIẾN <br>& CẦU THAY</h1><p class="performer">Anh Tấn Hiền</p></div></div>
-        <div class="slide bg-special-music"><div class="content-wrapper"><h1 class="main-title">GIÂY PHÚT NGỢI CA</h1><p class="sub-title">Thánh ca 796 </p><p class="performer">ÔB.MS & Ban Chấp sự</p></div></div>
-        <div class="slide bg-testimony"><div class="content-wrapper"><h1 class="main-title">NGỢI KHEN - CẢM TẠ <br>& LÀM CHỨNG</h1><p class="performer">Hội Thánh Chia Sẻ</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><h1 class="main-title">ĐỌC LỜI CHÚA</h1><p class="sub-title">Thi-thiên 71:1-24</p><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>1</strong> Hỡi Đức Giê-hô-va, tôi nương náu mình nơi Ngài; Chớ để tôi bị hổ thẹn bao giờ. <br><br><strong>2</strong> Xin hãy lấy công bình Ngài mà giải cứu tôi, và làm cho tôi được thoát; Xin hãy nghiêng tai qua nghe tôi, và cứu tôi.</p><p class="scripture-ref">Thi-thiên 71:1-2</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>3</strong> Xin hãy làm hòn đá dùng làm nơi ở cho tôi, Hầu cho tôi được vào đó luôn luôn; Chúa đã ra lịnh cứu tôi; Vì Chúa là hòn đá và là đồn lũy của tôi. <br><br><strong>4</strong> Hỡi Đức Chúa Trời tôi, xin giải cứu tôi khỏi tay kẻ ác, Khỏi tay kẻ bất công và người hung bạo.</p><p class="scripture-ref">Thi-thiên 71:3-4</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>5</strong> Vì, Chúa Giê-hô-va ôi, Chúa là sự trông cậy tôi, Và là sự tin tưởng tôi từ khi còn thơ ấu. <br><br><strong>6</strong> Tôi đã nương dựa vào Chúa từ lúc mới lọt lòng; Ấy là Chúa đã đem tôi ra khỏi lòng mẹ tôi: Tôi sẽ hằng ngợi khen Chúa.</p><p class="scripture-ref">Thi-thiên 71:5-6</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>7</strong> Tôi đã như một sự lạ cho nhiều người; Nhưng Chúa là nơi nương náu vững bền của tôi. <br><br><strong>8</strong> Miệng tôi đầy sự ngợi khen Chúa, Và sự tôn vinh Chúa cả ngày.</p><p class="scripture-ref">Thi-thiên 71:7-8</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>9</strong> Xin chớ từ bỏ tôi trong lúc tuổi già; Cũng đừng lìa khỏi tôi khi sức tôi hao mòn. <br><br><strong>10</strong> Vì các kẻ thù nghịch nói nghịch tôi; Những kẻ rình rập linh hồn tôi đồng mưu với nhau,</p><p class="scripture-ref">Thi-thiên 71:9-10</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>11</strong> Mà rằng: Đức Chúa Trời đã bỏ nó; Hãy đuổi theo bắt nó, vì không có ai giải cứu. <br><br><strong>12</strong> Hỡi Đức Chúa Trời, xin chớ ở xa tôi; Hỡi Đức Chúa Trời tôi, xin mau mau đến giúp đỡ tôi.</p><p class="scripture-ref">Thi-thiên 71:11-12</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>13</strong> Nguyện những kẻ cừu địch linh hồn tôi bị hổ thẹn và tiêu diệt; Nguyện những kẻ tìm làm hại tôi được bao phủ sự sỉ nhục và nhuốc nhơ. <br><br><strong>14</strong> Nhưng tôi sẽ trông cậy luôn luôn, Và ngợi khen Chúa càng ngày càng thêm.</p><p class="scripture-ref">Thi-thiên 71:13-14</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>15</strong> Miệng tôi sẽ thuật sự công bình và sự cứu rỗi của Chúa cả ngày; Vì tôi không biết số nó là bao nhiêu. <br><br><strong>16</strong> Tôi sẽ đến thuật sự oai-thế của Chúa Giê-hô-va; Tôi sẽ chỉ nhắc đến sự công bình của Chúa mà thôi.</p><p class="scripture-ref">Thi-thiên 71:15-16</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>17</strong> Hỡi Đức Chúa Trời, Chúa đã dạy tôi từ khi tôi còn thơ ấu; Cho đến bây giờ tôi đã rao truyền các công việc lạ lùng của Chúa. <br><br><strong>18</strong> Hỡi Đức Chúa Trời, dầu khi tôi đã già và tóc bạc, Xin chớ từ bỏ tôi, Cho đến chừng tôi đã truyền ra quyền năng của Chúa cho dòng dõi sau, Và thế lực của Chúa cho mọi người sẽ đến.</p><p class="scripture-ref">Thi-thiên 71:17-18</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>19</strong> Hỡi Đức Chúa Trời, sự công bình Chúa rất cao; Chúa đã làm những việc lớn; Hỡi Đức Chúa Trời, ai giống như Chúa? <br><br><strong>20</strong> Chúa, là Đấng đã cho chúng tôi thấy nhiều sự gian truân và khốn khó, Sẽ làm cho chúng tôi được sống lại, Và đem chúng tôi lên khỏi các vực sâu của đất.</p><p class="scripture-ref">Thi-thiên 71:19-20</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>21</strong> Chúa sẽ gia thêm sự sang trọng cho tôi, Trở lại an ủi tôi. <br><br><strong>22</strong> Hỡi Đức Chúa Trời tôi, tôi cũng sẽ lấy đờn cầm mà cảm tạ Chúa, Và khen sự thành thực của Chúa. Hỡi Đấng Thánh của Y-sơ-ra-ên, tôi sẽ dùng đờn sắt mà hát ngợi khen Chúa.</p><p class="scripture-ref">Thi-thiên 71:21-22</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><p class="scripture-content-bold"><strong>23</strong> Môi tôi sẽ reo mừng khi tôi hát ngợi khen Chúa, Và linh hồn tôi mà Chúa đã chuộc lại, cũng sẽ vui vẻ. <br><br><strong>24</strong> Lưỡi tôi cũng sẽ nói về sự công bình Chúa cả ngày; Vì những kẻ tìm làm hại tôi đã bị hổ thẹn và mất mặt rồi.</p><p class="scripture-ref">Thi-thiên 71:23-24</p></div></div>
-        <div class="slide bg-scripture"><div class="content-wrapper"><h1 class="main-title">CÂU GỐC</h1><p class="sub-title scripture-content-bold" style="font-size: 3.8vw;">"Nhưng tôi sẽ trông cậy luôn luôn, Và ngợi khen Chúa càng ngày càng thêm."</p><p class="performer">Thi-thiên 71:14</p></div></div>
-        <div class="slide bg-sermon"><div class="content-wrapper"><h1 class="main-title">GIẢNG LUẬN</h1><p class="sub-title">Kinh thánh: Thi-thiên 71:1-24 |Câu gốc: Thi-thiên 71:14</p><p class="performer">MSQN. Nguyễn Thái Dương</p></div></div>
-        <div class="slide bg-prayer"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN ĐÁP ỨNG</h1><p class="performer">CS. Thanh Thảo</p></div></div>
-        <div class="slide bg-announcement"><div class="content-wrapper"><h1 class="main-title">THÔNG BÁO</h1><p class="performer">Thư Ký Hội Thánh - CS. Ngô Nhơn</p></div></div>
-        <div class="slide bg-prayer"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN CHUNG </h1><p class="performer">Hội Thánh</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><h1 class="main-title">TẤT LỄ</h1><p class="sub-title">TC 23 - Tôn Vinh Chân Thần</p><p class="performer">Hội Thánh Cùng Đứng</p></div></div>
-        <div class="slide bg-praise"><div class="content-wrapper"><p class="hymn-lyrics">Tôn vinh Chân Thần nguồn ơn vô đối,<br>Dưới đất chúng con cùng hát khắp nơi;<br>Trời cao cũng chung ca ngợi Ba Ngôi,<br>Chúa Cha và Con với Linh muôn đời.<br>A-men.</p></div></div>
-        <div class="slide bg-benediction"><div class="content-wrapper"><h1 class="main-title">CHÚC PHƯỚC </h1><p class="performer">Mục Sư Quản Nhiệm</p></div></div>
-        <div class="slide bg-closing"><div class="content-wrapper"><h1 class="main-title" style="font-size: 4.5vw;">KÍNH CHÚC HỘI THÁNH</h1><p class="sub-title" style="font-size: 2.8vw;">MỘT TUẦN MỚI TRÀN ĐẦY ƠN PHƯỚC CHÚA BAN!</p></div></div>
+        <div class="slide active" id="bg-intro" data-title="Mở Đầu"><div class="content-wrapper"><h1 class="main-title" style="font-size: 4.5vw;">HỘI THÁNH TIN LÀNH GÒ MÂY</h1><p class="sub-title" style="font-size: 3.5vw;">CHƯƠNG TRÌNH THỜ PHƯỢNG CHÚA</p><p class="performer" style="font-size: 2.2vw;">Chúa nhật, 29/06/2025</p><h1 class="main-title" style="font-size: 4.5vw;">NGỢI KHEN - CẢM TẠ <br>& LÀM CHỨNG</h1><p class="performer" style="font-size: 2.5vw;">HDCT: CS. Ngô Nhơn<br>Chủ lễ: MSQN. Nguyễn Thái Dương</p></div></div>
+        <div class="slide bg-praise" data-title="TC 26"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">TC 26 - Chúc Cho Đấng Ngồi Trên Ngôi</p><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide bg-praise" data-title="TC 26 - Lời"><div class="content-wrapper"><p class="hymn-lyrics">Chúc cho Đấng ngồi trên ngôi,<br>cùng Chiên Con, được ngợi khen,<br>tôn quý, vinh hiển và quyền phép,<br>cho đến đời đời, cho đến đời đời.<br>A-men, A-men, A- men.</p></div></div>
+        <div class="slide bg-creed" data-title="Tín Điều"><div class="content-wrapper"><h1 class="main-title">TUYÊN XƯNG ĐỨC TIN</h1><p class="sub-title">Tín Điều Các Sứ Đồ</p><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide bg-prayer" data-title="Cầu Nguyện Khai Lễ"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN KHAI LỄ</h1><p class="performer">Bà MS. Quản nhiệm</p></div></div>
+        <div class="slide bg-praise" data-title="TC 325"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">Thánh Ca 325 - Gánh Lúa Về</p><p class="performer">Ban Hát Dẫn & Hội Thánh</p></div></div>
+        <div class="slide bg-praise" data-title="TC 617"><div class="content-wrapper"><h1 class="main-title">TÔN VINH CHÚA</h1><p class="sub-title">Thánh Ca 617 - Xin Cha Ban Cho Thêm Dầu</p><p class="performer">Ban Hát Dẫn & Hội Thánh</p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp"><div class="content-wrapper"><h1 class="main-title">ĐỌC KINH THÁNH ĐỐI ĐÁP</h1><p class="sub-title">Số 19 - CỦA BÁU THẬT</p><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 1"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Các ngươi chớ chứa của cải ở dưới đất, là nơi có sâu mối, ten rét làm hư, và kẻ trộm đào ngạch khoét vách mà lấy;</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 2"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Nhưng phải chứa của cải ở trên trời, là nơi chẳng có sâu mối, ten rét làm hư, cũng chẳng có kẻ trộm đào ngạch khoét vách mà lấy.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 3"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vì chưng của cải ngươi ở đâu, thì lòng ngươi cũng ở đó.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 4"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Chẳng ai được làm tôi hai chủ; vì sẽ ghét người nầy mà yêu người kia, hoặc trọng người nầy mà khinh người kia. Các ngươi không có thể làm tôi Đức Chúa Trời lại làm tôi Ma-môn nữa.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 5"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vậy nên ta phán cùng các ngươi rằng: Đừng vì sự sống mình mà lo đồ ăn uống; cũng đừng vì thân thể mình mà lo đồ mặc.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 6"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Sự sống há chẳng quí trọng hơn đồ ăn sao, thân thể há chẳng quí trọng hơn quần áo sao?</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 7"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Hãy xem loài chim trời: Chẳng có gieo, gặt, cũng chẳng có thâu trữ vào kho tàng, mà Cha các ngươi trên trời nuôi nó.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 8"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Các ngươi há chẳng phải là quí trọng hơn loài chim sao?</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 9"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Vả lại, có ai trong vòng các ngươi lo lắng mà làm cho đời mình được dài thêm một khắc không?</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 10"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Còn về phần quần áo, các ngươi lại lo lắng mà làm chi? Hãy ngắm xem những hoa huệ ngoài đồng mọc lên thể nào; chẳng làm khó nhọc, cũng không kéo chỉ;</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 11"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Nhưng ta phán cùng các ngươi, dẫu vua Sa-lô-môn sang trọng đến đâu, cũng không được mặc áo tốt như một hoa nào trong giống đó.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 12"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Hỡi kẻ ít đức tin, loài cỏ ngoài đồng, là giống nay còn sống, mai bỏ vào lò, mà Đức Chúa Trời còn cho nó mặc đẹp thể ấy thay, huống chi là các ngươi!</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 13"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Ấy vậy, các ngươi chớ lo lắng mà nói rằng: Chúng ta sẽ ăn gì? Uống gì? Mặc gì?</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 14"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Vì mọi điều đó, các dân ngoại vẫn thường tìm, và Cha các ngươi ở trên trời vốn biết các ngươi cần dùng những điều đó rồi.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 15"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="call">Nhưng trước hết, hãy tìm kiếm nước Đức Chúa Trời và sự công bình của Ngài, thì Ngài sẽ cho thêm các ngươi mọi điều ấy nữa.</span></p></div></div>
+        <div class="slide bg-scripture" data-title="KT Đối Đáp - 16"><div class="content-wrapper"><p class="responsive-scripture-bold"><span class="response">Vậy, chớ lo lắng chi về ngày mai; vì ngày mai sẽ lo về việc ngày mai. Sự khó nhọc ngày nào đủ cho ngày ấy.</span></p></div></div>
+        <div class="slide bg-offering" data-title="Dâng Hiến"><div class="content-wrapper"><h1 class="main-title">DÂNG HIẾN</h1><p class="sub-title">Thánh Ca 839 - Đến Với Chúa Tay Trắng Thôi Sao?</p><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide bg-prayer" data-title="Cầu Thay"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN DÂNG HIẾN <br>& CẦU THAY</h1><p class="performer">Anh Tấn Hiền</p></div></div>
+        <div class="slide bg-special-music" data-title="Giây Phút Ngợi Ca"><div class="content-wrapper"><h1 class="main-title">GIÂY PHÚT NGỢI CA</h1><p class="sub-title">Thánh ca 796 </p><p class="performer">ÔB.MS & Ban Chấp sự</p></div></div>
+        <div class="slide bg-testimony" data-title="Làm Chứng"><div class="content-wrapper"><h1 class="main-title">NGỢI KHEN - CẢM TẠ <br>& LÀM CHỨNG</h1><p class="performer">Hội Thánh Chia Sẻ</p></div></div>
+        <div class="slide bg-scripture" data-title="Đọc Lời Chúa"><div class="content-wrapper"><h1 class="main-title">ĐỌC LỜI CHÚA</h1><p class="sub-title">Thi-thiên 71:1-24</p><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:1-2"><div class="content-wrapper"><p class="scripture-content-bold"><strong>1</strong> Hỡi Đức Giê-hô-va, tôi nương náu mình nơi Ngài; Chớ để tôi bị hổ thẹn bao giờ. <br><br><strong>2</strong> Xin hãy lấy công bình Ngài mà giải cứu tôi, và làm cho tôi được thoát; Xin hãy nghiêng tai qua nghe tôi, và cứu tôi.</p><p class="scripture-ref">Thi-thiên 71:1-2</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:3-4"><div class="content-wrapper"><p class="scripture-content-bold"><strong>3</strong> Xin hãy làm hòn đá dùng làm nơi ở cho tôi, Hầu cho tôi được vào đó luôn luôn; Chúa đã ra lịnh cứu tôi; Vì Chúa là hòn đá và là đồn lũy của tôi. <br><br><strong>4</strong> Hỡi Đức Chúa Trời tôi, xin giải cứu tôi khỏi tay kẻ ác, Khỏi tay kẻ bất công và người hung bạo.</p><p class="scripture-ref">Thi-thiên 71:3-4</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:5-6"><div class="content-wrapper"><p class="scripture-content-bold"><strong>5</strong> Vì, Chúa Giê-hô-va ôi, Chúa là sự trông cậy tôi, Và là sự tin tưởng tôi từ khi còn thơ ấu. <br><br><strong>6</strong> Tôi đã nương dựa vào Chúa từ lúc mới lọt lòng; Ấy là Chúa đã đem tôi ra khỏi lòng mẹ tôi: Tôi sẽ hằng ngợi khen Chúa.</p><p class="scripture-ref">Thi-thiên 71:5-6</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:7-8"><div class="content-wrapper"><p class="scripture-content-bold"><strong>7</strong> Tôi đã như một sự lạ cho nhiều người; Nhưng Chúa là nơi nương náu vững bền của tôi. <br><br><strong>8</strong> Miệng tôi đầy sự ngợi khen Chúa, Và sự tôn vinh Chúa cả ngày.</p><p class="scripture-ref">Thi-thiên 71:7-8</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:9-10"><div class="content-wrapper"><p class="scripture-content-bold"><strong>9</strong> Xin chớ từ bỏ tôi trong lúc tuổi già; Cũng đừng lìa khỏi tôi khi sức tôi hao mòn. <br><br><strong>10</strong> Vì các kẻ thù nghịch nói nghịch tôi; Những kẻ rình rập linh hồn tôi đồng mưu với nhau,</p><p class="scripture-ref">Thi-thiên 71:9-10</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:11-12"><div class="content-wrapper"><p class="scripture-content-bold"><strong>11</strong> Mà rằng: Đức Chúa Trời đã bỏ nó; Hãy đuổi theo bắt nó, vì không có ai giải cứu. <br><br><strong>12</strong> Hỡi Đức Chúa Trời, xin chớ ở xa tôi; Hỡi Đức Chúa Trời tôi, xin mau mau đến giúp đỡ tôi.</p><p class="scripture-ref">Thi-thiên 71:11-12</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:13-14"><div class="content-wrapper"><p class="scripture-content-bold"><strong>13</strong> Nguyện những kẻ cừu địch linh hồn tôi bị hổ thẹn và tiêu diệt; Nguyện những kẻ tìm làm hại tôi được bao phủ sự sỉ nhục và nhuốc nhơ. <br><br><strong>14</strong> Nhưng tôi sẽ trông cậy luôn luôn, Và ngợi khen Chúa càng ngày càng thêm.</p><p class="scripture-ref">Thi-thiên 71:13-14</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:15-16"><div class="content-wrapper"><p class="scripture-content-bold"><strong>15</strong> Miệng tôi sẽ thuật sự công bình và sự cứu rỗi của Chúa cả ngày; Vì tôi không biết số nó là bao nhiêu. <br><br><strong>16</strong> Tôi sẽ đến thuật sự oai-thế của Chúa Giê-hô-va; Tôi sẽ chỉ nhắc đến sự công bình của Chúa mà thôi.</p><p class="scripture-ref">Thi-thiên 71:15-16</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:17-18"><div class="content-wrapper"><p class="scripture-content-bold"><strong>17</strong> Hỡi Đức Chúa Trời, Chúa đã dạy tôi từ khi tôi còn thơ ấu; Cho đến bây giờ tôi đã rao truyền các công việc lạ lùng của Chúa. <br><br><strong>18</strong> Hỡi Đức Chúa Trời, dầu khi tôi đã già và tóc bạc, Xin chớ từ bỏ tôi, Cho đến chừng tôi đã truyền ra quyền năng của Chúa cho dòng dõi sau, Và thế lực của Chúa cho mọi người sẽ đến.</p><p class="scripture-ref">Thi-thiên 71:17-18</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:19-20"><div class="content-wrapper"><p class="scripture-content-bold"><strong>19</strong> Hỡi Đức Chúa Trời, sự công bình Chúa rất cao; Chúa đã làm những việc lớn; Hỡi Đức Chúa Trời, ai giống như Chúa? <br><br><strong>20</strong> Chúa, là Đấng đã cho chúng tôi thấy nhiều sự gian truân và khốn khó, Sẽ làm cho chúng tôi được sống lại, Và đem chúng tôi lên khỏi các vực sâu của đất.</p><p class="scripture-ref">Thi-thiên 71:19-20</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:21-22"><div class="content-wrapper"><p class="scripture-content-bold"><strong>21</strong> Chúa sẽ gia thêm sự sang trọng cho tôi, Trở lại an ủi tôi. <br><br><strong>22</strong> Hỡi Đức Chúa Trời tôi, tôi cũng sẽ lấy đờn cầm mà cảm tạ Chúa, Và khen sự thành thực của Chúa. Hỡi Đấng Thánh của Y-sơ-ra-ên, tôi sẽ dùng đờn sắt mà hát ngợi khen Chúa.</p><p class="scripture-ref">Thi-thiên 71:21-22</p></div></div>
+        <div class="slide bg-scripture" data-title="Thi-thiên 71:23-24"><div class="content-wrapper"><p class="scripture-content-bold"><strong>23</strong> Môi tôi sẽ reo mừng khi tôi hát ngợi khen Chúa, Và linh hồn tôi mà Chúa đã chuộc lại, cũng sẽ vui vẻ. <br><br><strong>24</strong> Lưỡi tôi cũng sẽ nói về sự công bình Chúa cả ngày; Vì những kẻ tìm làm hại tôi đã bị hổ thẹn và mất mặt rồi.</p><p class="scripture-ref">Thi-thiên 71:23-24</p></div></div>
+        <div class="slide bg-sermon" data-title="Câu Gốc"><div class="content-wrapper"><h1 class="main-title">CÂU GỐC</h1><p class="sub-title scripture-content-bold" style="font-size: 3.8vw;">"Nhưng tôi sẽ trông cậy luôn luôn, Và ngợi khen Chúa càng ngày càng thêm."</p><p class="performer">Thi-thiên 71:14</p></div></div>
+        <div class="slide bg-sermon" data-title="Giảng Luận"><div class="content-wrapper"><h1 class="main-title">GIẢNG LUẬN</h1><p class="sub-title">Kinh thánh: Thi-thiên 71:1-24 |Câu gốc: Thi-thiên 71:14</p><p class="performer">MSQN. Nguyễn Thái Dương</p></div></div>
+        <div class="slide bg-prayer" data-title="Cầu Nguyện Đáp Ứng"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN ĐÁP ỨNG</h1><p class="performer">CS. Thanh Thảo</p></div></div>
+        <div class="slide bg-announcement" data-title="Thông Báo"><div class="content-wrapper"><h1 class="main-title">THÔNG BÁO</h1><p class="performer">Thư Ký Hội Thánh - CS. Ngô Nhơn</p></div></div>
+        <div class="slide bg-prayer" data-title="Cầu Nguyện Chung"><div class="content-wrapper"><h1 class="main-title">CẦU NGUYỆN CHUNG </h1><p class="performer">Hội Thánh</p></div></div>
+        <div class="slide" id="bg-closing-hymn" data-title="TC 23"><div class="content-wrapper"><h1 class="main-title">TẤT LỄ</h1><p class="sub-title">TC 23 - Tôn Vinh Chân Thần</p><p class="performer">Hội Thánh Cùng Đứng</p></div></div>
+        <div class="slide" id="bg-closing-hymn" data-title="TC 23 - Lời"><div class="content-wrapper"><p class="hymn-lyrics">Tôn vinh Chân Thần nguồn ơn vô đối,<br>Dưới đất chúng con cùng hát khắp nơi;<br>Trời cao cũng chung ca ngợi Ba Ngôi,<br>Chúa Cha và Con với Linh muôn đời.<br>A-men.</p></div></div>
+        <div class="slide bg-benediction" data-title="Chúc Phước"><div class="content-wrapper"><h1 class="main-title">CHÚC PHƯỚC </h1><p class="performer">Mục Sư Quản Nhiệm</p></div></div>
+        <div class="slide bg-closing" data-title="Kết Thúc"><div class="content-wrapper"><h1 class="main-title" style="font-size: 4.5vw;">KÍNH CHÚC HỘI THÁNH</h1><p class="sub-title" style="font-size: 2.8vw;">MỘT TUẦN MỚI TRÀN ĐẦY ƠN PHƯỚC CHÚA BAN!</p></div></div>
         
-        <!-- HTML MỚI CHO CÁC NÚT ĐIỀU HƯỚNG -->
         <div id="nav-controls">
+            <button id="btn-fullscreen" title="Toàn màn hình (F11)">⤢</button>
+            <button id="btn-export" title="Xuất ra PowerPoint">⤓</button>
             <button id="btn-prev" title="Lùi lại (Mũi tên Trái/Lên)">◀️</button>
-            <button id="btn-all" title="Xem tất cả các slide (ESC để đóng)">▦</button>
+            <button id="btn-all" title="Xem tất cả slide (ESC để đóng)">▦</button>
             <button id="btn-next" title="Tới (Mũi tên Phải/Xuống/Chuột trái/Space)">▶️</button>
         </div>
         
         <div id="thumbnail-overlay">
-            <span id="close-thumbnails" title="Đóng (ESC)">&times;</span>
+            <span id="close-thumbnails" title="Đóng (ESC)">×</span>
             <div id="thumbnail-grid"></div>
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- PHẦN JAVASCRIPT - ĐÃ ĐIỀU CHỈNH LOGIC CỦA THUMBNAIL               -->
-    <!-- ================================================================= -->
+    <!-- PHẦN JAVASCRIPT -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('presentation-container');
@@ -273,6 +248,8 @@
             const btnPrev = document.getElementById('btn-prev');
             const btnNext = document.getElementById('btn-next');
             const btnAll = document.getElementById('btn-all');
+            const btnFullscreen = document.getElementById('btn-fullscreen');
+            const btnExport = document.getElementById('btn-export');
             const thumbnailOverlay = document.getElementById('thumbnail-overlay');
             const thumbnailGrid = document.getElementById('thumbnail-grid');
             const closeThumbnailsBtn = document.getElementById('close-thumbnails');
@@ -288,52 +265,45 @@
 
             function nextSlide() { showSlide(currentSlide + 1); }
             function prevSlide() { showSlide(currentSlide - 1); }
+            function goToFirstSlide() { showSlide(0); }
+            function goToLastSlide() { showSlide(slides.length - 1); }
 
-            // === HÀM TẠO THUMBNAIL TRỰC QUAN (LIVE PREVIEW) ===
             function generateAndShowThumbnails() {
                 thumbnailGrid.innerHTML = '';
-                // Lấy lại chiều rộng mỗi khi mở để đảm bảo tính chính xác khi thay đổi kích thước cửa sổ
                 presentationWidth = container.offsetWidth;
                 
                 slides.forEach((slide, index) => {
-                    // 1. Tạo container cho thumbnail
                     const thumbItem = document.createElement('div');
                     thumbItem.className = 'thumbnail-item';
                     thumbItem.dataset.index = index;
 
-                    // 2. Tạo wrapper để scale
                     const thumbWrapper = document.createElement('div');
                     thumbWrapper.className = 'thumbnail-wrapper';
                     thumbWrapper.style.width = `${presentationWidth}px`;
                     thumbWrapper.style.height = `${presentationWidth * (9/16)}px`;
 
-                    // 3. Clone slide gốc và xử lý
                     const clonedSlide = slide.cloneNode(true);
-                    clonedSlide.classList.remove('active'); // Bỏ trạng thái active
-                    clonedSlide.style.opacity = 1; // Luôn hiển thị
+                    clonedSlide.classList.remove('active');
+                    clonedSlide.style.opacity = 1;
                     clonedSlide.style.visibility = 'visible';
                     const clonedContent = clonedSlide.querySelector('.content-wrapper');
                     if (clonedContent) {
-                        clonedContent.style.opacity = 1; // Luôn hiển thị
-                        clonedContent.style.animation = 'none'; // Tắt animation
+                        clonedContent.style.opacity = 1;
+                        clonedContent.style.animation = 'none';
                     }
                     
-                    // 4. Tính toán tỉ lệ scale và áp dụng
-                    const thumbnailWidth = 220; // Chiều rộng của thumbnail trong grid
+                    const thumbnailWidth = 220;
                     const scaleFactor = thumbnailWidth / presentationWidth;
                     thumbWrapper.style.transform = `scale(${scaleFactor})`;
 
-                    // 5. Thêm lớp phủ chứa số thứ tự slide
                     const infoOverlay = document.createElement('div');
                     infoOverlay.className = 'thumbnail-overlay-info';
                     infoOverlay.textContent = `${index + 1}`;
                     
-                    // 6. Gắn kết các phần tử lại với nhau
                     thumbWrapper.appendChild(clonedSlide);
                     thumbItem.appendChild(thumbWrapper);
-                    thumbItem.appendChild(infoOverlay); // Đặt lớp phủ thông tin trên cùng
+                    thumbItem.appendChild(infoOverlay);
                     
-                    // 7. Thêm sự kiện click để nhảy đến slide
                     thumbItem.addEventListener('click', (e) => {
                         e.stopPropagation();
                         showSlide(index);
@@ -349,16 +319,88 @@
                 thumbnailOverlay.style.display = 'none';
             }
 
-            // Gán sự kiện
+            async function exportToPptx() {
+                const originalBtnText = btnExport.innerHTML;
+                btnExport.innerHTML = '...';
+                btnExport.disabled = true;
+
+                try {
+                    let pptx = new PptxGenJS();
+                    pptx.layout = "LAYOUT_16X9";
+                    pptx.author = "HTTL Gò Mây";
+                    pptx.title = "Chương Trình Thờ Phượng";
+
+                    for (const slide of slides) {
+                        let pptxSlide = pptx.addSlide();
+
+                        const computedStyle = getComputedStyle(slide);
+                        const bgImage = computedStyle.backgroundImage;
+                        if (bgImage && bgImage !== 'none') {
+                            const urlMatch = bgImage.match(/url\("?(.+?)"?\)/);
+                            if (urlMatch && urlMatch[1]) {
+                                pptxSlide.background = { path: urlMatch[1] };
+                            }
+                        }
+
+                        pptxSlide.addShape(pptx.shapes.RECTANGLE, {
+                            x: 0, y: 0, w: '100%', h: '100%',
+                            fill: { color: '200519', transparency: 75 }
+                        });
+
+                        const contentWrapper = slide.querySelector('.content-wrapper');
+                        if (contentWrapper) {
+                            // This part remains simplified for robustness, but could be expanded
+                            const titleEl = contentWrapper.querySelector('.main-title');
+                            const subTitleEl = contentWrapper.querySelector('.sub-title');
+                            const textEl = contentWrapper.querySelector('.hymn-lyrics, .scripture-content-bold, .responsive-scripture-bold');
+                            
+                            let yPos = 1.0;
+                            if (titleEl) {
+                                pptxSlide.addText(titleEl.innerText, { x: 0.5, y: yPos, w: '90%', h: 1, color: 'FFD700', fontSize: 44, bold: true, align: 'center', fontFace: "Montserrat" });
+                                yPos += 1.5;
+                            }
+                            if (subTitleEl) {
+                                pptxSlide.addText(subTitleEl.innerText, { x: 0.5, y: yPos, w: '90%', h: 1, color: 'FFFFFF', fontSize: 28, bold: true, align: 'center'});
+                                yPos += 1.0;
+                            }
+                             if (textEl) {
+                                pptxSlide.addText(textEl.innerText, { x: 0.5, y: 0.5, w: '90%', h: '90%', color: 'FFFFFF', fontSize: 36, bold: true, align: 'center', valign: 'middle'});
+                            }
+                        }
+                    }
+
+                    pptx.writeFile({ fileName: 'ChuongTrinhThoPhuong.pptx' });
+
+                } catch (error) {
+                    console.error("Lỗi khi xuất PPTX:", error);
+                    alert("Đã có lỗi xảy ra trong quá trình xuất file.");
+                } finally {
+                    btnExport.innerHTML = '⤓';
+                    btnExport.disabled = false;
+                }
+            }
+            
+            function isFullScreen() { return !!(document.fullscreenElement); }
+            function toggleFullScreen() {
+                if (!isFullScreen()) { document.documentElement.requestFullscreen(); } 
+                else { document.exitFullscreen(); }
+            }
+            
+            // GÁN SỰ KIỆN
             btnPrev.addEventListener('click', (e) => { e.stopPropagation(); prevSlide(); });
             btnNext.addEventListener('click', (e) => { e.stopPropagation(); nextSlide(); });
             btnAll.addEventListener('click', (e) => { e.stopPropagation(); generateAndShowThumbnails(); });
+            btnFullscreen.addEventListener('click', (e) => { e.stopPropagation(); toggleFullScreen(); });
+            btnExport.addEventListener('click', (e) => { e.stopPropagation(); exportToPptx(); });
+
             closeThumbnailsBtn.addEventListener('click', closeThumbnails);
             thumbnailOverlay.addEventListener('click', (e) => { if (e.target === thumbnailOverlay) closeThumbnails(); });
 
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); } 
                 else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); } 
+                else if (e.key === 'Home' || e.key === '1') { e.preventDefault(); goToFirstSlide(); }
+                else if (e.key === 'End') { e.preventDefault(); goToLastSlide(); }
                 else if (e.key === 'Escape') { closeThumbnails(); }
             });
 
@@ -368,13 +410,13 @@
             container.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
             container.addEventListener('touchend', (e) => {
                 const touchEndX = e.changedTouches[0].screenX; const deltaX = touchEndX - touchStartX;
-                if (Math.abs(deltaX) > swipeThreshold) { if (deltaX < 0) { nextSlide(); } else { prevSlide(); } }
+                if (Math.abs(deltaX) > swipeThreshold) {
+                    if (deltaX < 0) { nextSlide(); } 
+                    else { prevSlide(); }
+                }
             }, { passive: true });
 
-            // Cập nhật lại chiều rộng nếu cửa sổ thay đổi kích thước (để thumbnail luôn đúng)
-            window.addEventListener('resize', () => {
-                presentationWidth = container.offsetWidth;
-            });
+            window.addEventListener('resize', () => { presentationWidth = container.offsetWidth; });
         });
     </script>
 </body>
